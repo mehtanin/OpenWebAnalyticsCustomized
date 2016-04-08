@@ -1,0 +1,36 @@
+<?php
+   $dbhost = '127.0.0.1';
+   $dbuser = 'root';
+   $dbpass = '';
+   
+   $conn = mysql_connect($dbhost, $dbuser, $dbpass);
+   
+   if(! $conn ) {
+      die('Could not connect: ' . mysql_error());
+   }
+   
+   $sql = 'SELECT action_name, action_label, action_group, numeric_value FROM owa_action_fact';
+   mysql_select_db('owa');
+   $retval = mysql_query( $sql, $conn );
+   
+   if(! $retval ) {
+      die('Could not get data: ' . mysql_error());
+   }
+   
+   $actionsXML = new SimpleXMLElement("<actions></actions>");
+   $actionsXML->addAttribute('version', '0.0.0.1');
+   while($row = mysql_fetch_array($retval, MYSQL_ASSOC)) {
+	   $actionsXML->addChild('action');
+	   $actionsXML->action->addChild('Name',$row['action_name']);
+	   $actionsXML->action->addChild('Label',$row['action_label']);
+	   $actionsXML->action->addChild('Group',$row['action_group']);
+	   $actionsXML->action->addChild('Value',$row['numeric_value']);       
+   }
+   
+   $actionsIntro = $actionsXML->addChild('content');
+   $actionsIntro->addAttribute('type', 'latest');
+   Header('Content-type: text/xml');
+   echo $actionsXML->asXML();
+     
+   mysql_close($conn);
+?>
